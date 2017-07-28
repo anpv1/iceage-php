@@ -2,6 +2,7 @@
     "name": "anpv1/iceage-php",
     "description": "Lightning fast micro PHP framework",
     "type": "micro-php-framework",
+    "minimum-stability": "1.0.0",
     "license": "MIT",
     "authors": [
         {
