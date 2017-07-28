@@ -1,0 +1,24 @@
+{
+    "name": "anpv1/iceage-php",
+    "description": "Lightning fast micro PHP framework",
+    "type": "web framework",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "anpham",
+            "email": "phaman86@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "IceAge\\": "src/"
+        }
+    },
+    "require": {
+        "zendframework/zend-diactoros": "^1.4",
+        "psr/http-message": "^1.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^6.2"
+    }
+}
