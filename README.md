@@ -139,7 +139,7 @@ class Services {
     public static function twig_service(){
         if(!self::$twig){
             $loader = new \Twig_Loader_Filesystem(realpath('app/templates/views'));
-            return new \Twig_Environment($loader, array(
+            self::$twig = new \Twig_Environment($loader, array(
                 'cache' => realpath('app/templates/cache'),
                 'auto_reload' => true
             ));
