@@ -50,7 +50,10 @@ $app->register('Twig_Environment', function(){
 
 // routes definition
 // in the route handler you can use the $db service which is a PDO instance
-$app->get('/', function($db, Twig $template){return $template->render('template.html', array('message' => Hello, world!'));});
+// and load any parameter name which is a Twig_Environment instance
+$app->get('/', function($db, Twig $template){
+    return $template->render('template.html', array('message' => 'Hello, world!'));
+});
 $app->run();
 
 ```
