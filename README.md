@@ -23,6 +23,7 @@ IceAge support 2 main features: routes and services management. You can register
 <?php
 // index.php
 // composer autoload, install any dependencies you need
+use \Twig_Environment as Twig;
 require_once('../vendor/autoload.php');
 $app = new \IceAge\Application();
 
@@ -38,12 +39,22 @@ $app->register('db', function(){
     );
 });
 
+// register Twig template
+$app->register('Twig_Environment', function(){
+    $loader = new \Twig_Loader_Filesystem(realpath('app/templates/views'));
+    return new Twig($loader, array(
+        'cache' => realpath('app/templates/cache'),
+        'auto_reload' => true
+    ));
+});
+
 // routes definition
 // in the route handler you can use the $db service which is a PDO instance
-$app->get('/', function($db){return 'Hello, world!';});
+$app->get('/', function($db, Twig $template){return $template->render('template.html', array('message' => Hello, world!'));});
 $app->run();
 
 ```
+As you can see in the above example, services can be loaded by its name ($db) or by its class name (Twig_Environment)
 ### Bootstrap application
 IceAge application object support a bootstrap method which can use to register all services and routes handler. For example:
 ```php

@@ -8,7 +8,7 @@ class Application
     protected $services = array();
 
     public function __construct(){
-        $this->register('request', '\\IceAge\\Application::psr_request');
+        $this->register('Psr\Http\Message\RequestInterface', '\\IceAge\\Application::psr_request');
     }
 
     public function bootstrap(array $services){
@@ -105,8 +105,13 @@ class Application
         $parameters = $reflection->getParameters();
         $services = array();
         foreach($parameters as $parameter) {
+            $class_name = $parameter->getClass()->name;
             $name = $parameter->getName();
-            $services[] = isset($params[$name]) ? $params[$name] : $this->load_service($name);
+            $service = isset($params[$name]) ? $params[$name] : $this->load_service($name);
+            if(is_null($service) && $class_name){
+                $service = $this->load_service($class_name);
+            }
+            $services[] = $service;
         }
         return call_user_func_array($handler, $services);
     }
