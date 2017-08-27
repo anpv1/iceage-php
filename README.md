@@ -23,8 +23,8 @@ IceAge support 2 main features: routes and services management. You can register
 <?php
 // index.php
 // composer autoload, install any dependencies you need
-use \Twig_Environment as Twig;
 require_once('../vendor/autoload.php');
+use \Twig_Environment as Twig;
 $app = new \IceAge\Application();
 
 // register $db service
@@ -39,7 +39,7 @@ $app->register('db', function(){
     );
 });
 
-// register Twig template
+// register Twig_Environment template
 $app->register('Twig_Environment', function(){
     $loader = new \Twig_Loader_Filesystem(realpath('app/templates/views'));
     return new Twig($loader, array(
