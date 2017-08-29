@@ -105,7 +105,8 @@ class Application
         $parameters = $reflection->getParameters();
         $services = array();
         foreach($parameters as $parameter) {
-            $class_name = $parameter->getClass()->name;
+            $class_obj = $parameter->getClass();
+            $class_name = $class_obj ? $class_obj->name : '';
             $name = $parameter->getName();
             $service = isset($params[$name]) ? $params[$name] : $this->load_service($name);
             if(is_null($service) && $class_name){
