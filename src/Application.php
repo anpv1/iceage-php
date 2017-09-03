@@ -51,11 +51,9 @@ class Application
         return $route;
     }
 
-    // by default, routing system only accept params with pattern [\w\-_\s]+
-    // example:  :name, :category_id :this-is-the-title-01
-    // change the default value if you need more than that
-    public function route($pattern, $handler, $method = 'GET|POST', $param_pattern = '[\w\-_\s]+'){
-        $route = new Route($pattern, $method, $param_pattern);
+    // register a route
+    public function route($pattern, $handler, $method = 'GET|POST'){
+        $route = new Route($pattern, $method);
         $this->routes[] = array('route' => $route, 'handler' => $handler);
         return $route;
     }

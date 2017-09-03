@@ -17,6 +17,22 @@ $app->run();
 
 ```
 
+### Routing
+```php
+// Routing with regex definition of parameters and multiple methods
+// id in URL must be digit to match
+$app->route(
+    '/hello/:id|[0-9]+|', 
+    '\\App\\Controller\\Hello::get', 
+    'GET|POST'
+);
+// optional parameters
+// this will match /blog/2017, /blog/2017/07, /blog/2017/07/01
+$app->get('/blog(/:year|[\d]{4}|(/:month|[\d]{2}|(/:day|[\d]{2}|)?)?)?', function($route_params){
+    return $route_params;
+});
+```
+
 ### Using Services
 IceAge support 2 main features: routes and services management. You can register service to the application using register method:
 ```php
