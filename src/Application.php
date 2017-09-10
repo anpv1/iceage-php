@@ -6,8 +6,20 @@ class Application
     private static $request;
     protected $routes = array();
     protected $services = array();
+    protected $server;
+    protected $get;
+    protected $post;
+    protected $cookie;
+    protected $files;
 
-    public function __construct(){
+    public function __construct(array $server = array(), array $get = array(), 
+        array $post = array(), array $cookie = array(), array $files = array())
+    {
+        $this->server = $server ? $server : $_SERVER;
+        $this->get = $get ? $get : $_GET;
+        $this->post = $post ? $post : $_POST;
+        $this->cookie = $cookie ? $cookie : $_COOKIE;
+        $this->files = $files ? $files : $_FILES;
         $this->register('Psr\Http\Message\RequestInterface', '\\IceAge\\Application::psr_request');
     }
 
@@ -60,13 +72,19 @@ class Application
 
     // main process of application
     public function run(){
-        // route dispatching
+        // route dispatching result variables
         $route_handler = null;
         $route_params = null;
         $middlewares = array();
 
-        $uri = explode('?', $_SERVER['REQUEST_URI']);
-        $method = isset($_REQUEST['_METHOD']) ? $_REQUEST['_METHOD'] : $_SERVER['REQUEST_METHOD'];
+        // default URI will be /, default method will be GET, override by _METHOD
+        $request_uri = isset($this->server['REQUEST_URI']) ? $this->server['REQUEST_URI'] : '/';
+        $uri = explode('?', $request_uri);
+        $method = isset($this->server['REQUEST_METHOD']) ? $this->server['REQUEST_METHOD'] : 'GET';
+        if(isset($this->get['_METHOD'])) $method = $this->get['_METHOD'];
+        if(isset($this->post['_METHOD'])) $method = $this->post['_METHOD'];
+
+        // dispatch route and store result
         foreach ($this->routes as $item) {
             $route_params = $item['route']->match($uri[0], $method);
             if($route_params){
@@ -76,7 +94,6 @@ class Application
             }
         }
 
-        // no routes matched
         if(!$route_params){
             throw new Exception("No route matched", Exception::NO_ROUTE);
         }
@@ -85,13 +102,12 @@ class Application
         foreach($middlewares as $middleware){
             $response = $this->run_handler($middleware['handler'], $middleware['options']);
             if($response){
-                return $this->response($response);
+                return $response;
             }
         }
 
         // run route handler
-        $response = $this->run_handler($route_handler, array('route_params' => $route_params));
-        return $this->response($response);
+        return $this->run_handler($route_handler, array('route_params' => $route_params));
     }
 
     public function run_handler($handler, array $params = array()){
@@ -99,14 +115,21 @@ class Application
             throw new Exception("Handler is not a callable", Exception::HANDLER_NOT_CALLABLE);
         }
 
+        // get handler parameters so we can load dependencies
         $reflection = $this->getHandlerRefection($handler);
         $parameters = $reflection->getParameters();
+
         $services = array();
+        // loop through parameters and load corresponding registered services
         foreach($parameters as $parameter) {
             $class_obj = $parameter->getClass();
             $class_name = $class_obj ? $class_obj->name : '';
+            
+            // try load service by its name
             $name = $parameter->getName();
             $service = isset($params[$name]) ? $params[$name] : $this->load_service($name);
+
+            // if no service found by name, try load by its class
             if(is_null($service) && $class_name){
                 $service = $this->load_service($class_name);
             }
@@ -129,7 +152,10 @@ class Application
 
     protected static function psr_request(){
         if(!self::$request){
-            self::$request = \Zend\Diactoros\ServerRequestFactory::fromGlobals();
+            self::$request = \Zend\Diactoros\ServerRequestFactory::fromGlobals(
+                                $this->server, $this->get, $this->post,
+                                $this->cookie, $this->files
+                            );
         }
         return self::$request;
     }
@@ -154,10 +180,8 @@ class Application
 
     // this code come from zend-diactoros
     private function psr_response($response){
-        ob_start();
-        $bufferLevel = ob_get_level();
         $emitter = new \Zend\Diactoros\Response\SapiEmitter();
-        $emitter->emit($response, $bufferLevel);
+        $emitter->emit($response);
     }
 
     private function getHandlerRefection($handler){
