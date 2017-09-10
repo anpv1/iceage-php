@@ -1,6 +1,7 @@
 <?php
 use PHPUnit\Framework\TestCase;
 use IceAge\Application;
+use Psr\Http\Message\RequestInterface;
 
 class IceAge_Application_Test extends TestCase {
     public function testDispatchNormalRoute(){
@@ -87,6 +88,21 @@ class IceAge_Application_Test extends TestCase {
         // mock route register
         $app->get('/test', 'NoFunction::InThisContext');
         $response = $app->run();
+    }
+
+    public function testCoreServices(){
+        // mock application
+        $app = new Application(
+            array("REQUEST_URI" => "/hello/Bob", "REQUEST_METHOD" => "GET"),
+            array('id' => 123)
+        );
+        // mock route register
+        $app->get('/hello/:name', function($route_params, RequestInterface $request){
+            $query = $request->getQueryParams();
+            return 'Name:'.$route_params['name'].'. ID:'.$query['id'];
+        });
+        $response = $app->run();
+        $this->assertEquals($response, 'Name:Bob. ID:123');
     }
 
     public function testBootstrapWithRouteAndService(){

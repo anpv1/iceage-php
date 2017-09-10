@@ -3,7 +3,7 @@ namespace IceAge;
 
 class Application
 {
-    private static $request;
+    protected $request;
     protected $routes = array();
     protected $services = array();
     protected $server;
@@ -20,7 +20,7 @@ class Application
         $this->post = $post ? $post : $_POST;
         $this->cookie = $cookie ? $cookie : $_COOKIE;
         $this->files = $files ? $files : $_FILES;
-        $this->register('Psr\Http\Message\RequestInterface', '\\IceAge\\Application::psr_request');
+        $this->register('Psr\Http\Message\RequestInterface', array($this, 'psr_request'));
     }
 
     public function bootstrap(array $services){
@@ -150,14 +150,14 @@ class Application
         }
     }
 
-    protected static function psr_request(){
-        if(!self::$request){
-            self::$request = \Zend\Diactoros\ServerRequestFactory::fromGlobals(
+    protected function psr_request(){
+        if(!$this->request){
+            $this->request = \Zend\Diactoros\ServerRequestFactory::fromGlobals(
                                 $this->server, $this->get, $this->post,
                                 $this->cookie, $this->files
                             );
         }
-        return self::$request;
+        return $this->request;
     }
 
     protected function load_service($name){
@@ -186,10 +186,14 @@ class Application
 
     private function getHandlerRefection($handler){
         $reflection = null;
-        try{
-            $reflection = new \ReflectionFunction($handler);
-        } catch (\ReflectionException $e) {
-            $reflection = new \ReflectionMethod($handler);
+        if(is_array($handler)){
+            $reflection = new \ReflectionMethod($handler[0], $handler[1]);
+        } else {
+            try{
+                $reflection = new \ReflectionFunction($handler);
+            } catch (\ReflectionException $e) {
+                $reflection = new \ReflectionMethod($handler);
+            }
         }
 
         return $reflection;
