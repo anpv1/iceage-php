@@ -13,7 +13,8 @@ $app = new \IceAge\Application();
 
 // routes definition
 $app->get('/', function(){return 'Hello, world!';});
-$app->run();
+$result = $app->run();
+$app->response($result);
 
 ```
 
@@ -70,7 +71,9 @@ $app->register('Twig_Environment', function(){
 $app->get('/', function($db, Twig $template){
     return $template->render('template.html', array('message' => 'Hello, world!'));
 });
-$app->run();
+
+$result = $app->run();
+$app->response($result);
 
 ```
 As you can see in the above example, services can be loaded by its name ($db) or by its class name (Twig_Environment)
@@ -91,12 +94,14 @@ $app->bootstrap(array(
 ));
 
 try {
-    $app->run();
+    $result = $app->run();
 }
 catch(Exception $e){
     $response = $app->run_handler('\\App\\Controller\\Error::error', array('error' => $e));
-    $app->response($response);
+    $result = $app->response($response);
 }
+
+$app->response($result);
 
 ```
 
