@@ -1,5 +1,5 @@
 # IceAge -  micro php framework
-IceAge is a PHP nano-framework which is lightning fast and extreme small with total around 250 lines of code. IceAge provide a very simple, but powerful and flexible interface for building web-based applications.
+IceAge is a PHP nano-framework which is lightning fast and extreme small with total around 350 lines of code. IceAge provide a very simple, but powerful and flexible interface for building web-based applications.
 
 In my Lenovo U4170, Intel Core i5 5200U, 4GB RAM, using apache bench, a full page using IceAge with dotenv to load environment variables, Twig for template engine and 1 PDO MySQL query can reach 1639.09 requests/second. A hello world page using IceAge can reach up to 10167.46 requests/second.
 
@@ -32,6 +32,22 @@ $app->route(
 $app->get('/blog(/:year|[\d]{4}|(/:month|[\d]{2}|(/:day|[\d]{2}|)?)?)?', function($route_params){
     return $route_params;
 });
+
+// grouping routes
+$app->group('/admin', function(){
+    $this->get('/photo', function(){
+        return 'PhotoAdmin';
+    }); // match /admin/photo
+
+    $this->post('/gallery', function(){
+        return 'GalleryAdmin';
+    }); // match /admin/gallery
+
+})->middleware(function($required_login){
+    if($required_login){
+        return 'RequiredLogin';
+    }
+}, array('required_login' => 1));
 ```
 
 ### Using Services
