@@ -133,7 +133,7 @@ class IceAge_Application_Test extends TestCase {
             array("REQUEST_URI" => "/test/0", "REQUEST_METHOD" => "GET")
         );
         // mock route register
-        $app->get('/test:stop|\d+', function(){
+        $app->get('/test/:stop|\d+|', function(){
             return 'Test';
         })->middleware(function($stop, $route_params){
             // only stop if params in route and params of middleware equal 1
@@ -156,5 +156,63 @@ class IceAge_Application_Test extends TestCase {
         }, array('stop' => 1));
         $response = $app->run();
         $this->assertEquals($response, 'Stop');
+    }
+
+
+    public function testGroupDispatch(){
+        // mock application
+        $app = new Application(
+            array("REQUEST_URI" => "/admin/photo", "REQUEST_METHOD" => "GET")
+        );
+        // mock route register
+        $app->group('/admin', function(){
+            $this->get('/photo', function(){
+                return 'PhotoAdmin';
+            });
+        });
+        $response = $app->run();
+        $this->assertEquals($response, 'PhotoAdmin');
+    }
+
+    public function testGroupRouteMiddlewares(){
+        // mock application
+        $app = new Application(
+            array("REQUEST_URI" => "/admin/photo/1", "REQUEST_METHOD" => "GET")
+        );
+        // mock route register
+        $app->group('/admin', function(){
+            $this->get('/photo/:stop|\d+|', function(){
+                return 'PhotoAdmin';
+            })->middleware(function($required_login, $route_params){
+                if($route_params['stop'] == 1 || $required_login == 1) return 'Stop';
+            }, array('required_login' => 1));
+        })->middleware(function($required_login){
+            if($required_login){
+                return 'RequiredLogin';
+            }
+        }, array('required_login' => 0));
+        $response = $app->run();
+        $this->assertEquals($response, 'Stop');
+    }
+
+    public function testGroupMiddlewares(){
+        // mock application
+        $app = new Application(
+            array("REQUEST_URI" => "/admin/photo/1", "REQUEST_METHOD" => "GET")
+        );
+        // mock route register
+        $app->group('/admin', function(){
+            $this->get('/photo/:stop|\d+|', function(){
+                return 'PhotoAdmin';
+            })->middleware(function($required_login, $route_params){
+                if($route_params['stop'] == 1 || $required_login == 1) return 'Stop';
+            }, array('required_login' => 1));
+        })->middleware(function($required_login){
+            if($required_login){
+                return 'RequiredLogin';
+            }
+        }, array('required_login' => 1));
+        $response = $app->run();
+        $this->assertEquals($response, 'RequiredLogin');
     }
 }

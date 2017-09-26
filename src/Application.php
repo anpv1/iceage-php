@@ -5,6 +5,7 @@ class Application
 {
     protected $request;
     protected $routes = array();
+    protected $groups = array();
     protected $services = array();
     protected $server;
     protected $get;
@@ -37,30 +38,22 @@ class Application
 
     // shortcut for "GET" route
     public function get($pattern, $handler){
-        $route = new Route($pattern, 'GET');
-        $this->routes[] = array('route' => $route, 'handler' => $handler);
-        return $route;
+        return $this->route($pattern, $handler, 'GET');
     }
     
     // shortcut for "POST" route
     public function post($pattern, $handler){
-        $route = new Route($pattern, 'POST');
-        $this->routes[] = array('route' => $route, 'handler' => $handler);
-        return $route;
+        return $this->route($pattern, $handler, 'POST');
     }
 
     // shortcut for "PUT" route
     public function put($pattern, $handler){
-        $route = new Route($pattern, 'PUT');
-        $this->routes[] = array('route' => $route, 'handler' => $handler);
-        return $route;
+        return $this->route($pattern, $handler, 'PUT');
     }
 
     // shortcut for "DELETE" route
     public function delete($pattern, $handler){
-        $route = new Route($pattern, 'DELETE');
-        $this->routes[] = array('route' => $route, 'handler' => $handler);
-        return $route;
+        return $this->route($pattern, $handler, 'DELETE');
     }
 
     // register a route
@@ -68,6 +61,18 @@ class Application
         $route = new Route($pattern, $method);
         $this->routes[] = array('route' => $route, 'handler' => $handler);
         return $route;
+    }
+
+    // register group
+    public function group($pattern, \Closure $callback){
+        $group = new RouteGroup($pattern);
+        $this->groups[] = $group;
+
+        // running callback in $group context
+        $callback = $callback->bindTo($group);
+        $callback();
+
+        return $group;
     }
 
     // main process of application
@@ -91,6 +96,19 @@ class Application
                 $route_handler = $item['handler'];
                 $middlewares = $item['route']->getMiddlewares();
                 break;
+            }
+        }
+
+        // check in route groups
+        if(!$route_params){
+            foreach ($this->groups as $group) {
+                $result = $group->match($uri[0], $method);
+                if($result){
+                    $route = $result['route'];
+                    $route_params = $result['route_params'];
+                    $route_handler = $result['handler'];
+                    $middlewares = array_merge($group->getMiddlewares(), $route->getMiddlewares());
+                }
             }
         }
 

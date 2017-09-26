@@ -5,7 +5,7 @@ use IceAge\Route;
 class IceAge_Route_Test extends TestCase {
     public function testNormalRouteMatch(){
         $route = new Route('/', 'GET');
-        $this->assertNotNull($route->match('/', 'GET'));
+        $this->assertGreaterThan(0, count($route->match('/', 'GET')));
         $this->assertCount(0, $route->match('/hello', 'GET'));
         $this->assertCount(0, $route->match('/', 'POST'));
     }
@@ -19,24 +19,24 @@ class IceAge_Route_Test extends TestCase {
 
     public function testMultipleMethodsMatch(){
         $route = new Route('/hello', 'GET|POST');
-        $this->assertNotNull($route->match('/hello', 'GET'));
-        $this->assertNotNull($route->match('/hello', 'POST'));
+        $this->assertGreaterThan(0, count($route->match('/hello', 'GET')));
+        $this->assertGreaterThan(0, count($route->match('/hello', 'POST')));
         $this->assertCount(0, $route->match('/hello', 'PUT'));
     }
 
     public function testOptionalParameterMatch(){
         $route = new Route('/blog(/:year(/:month(/:day)?)?)?', 'GET');
-        $this->assertNotNull($route->match('/blog', 'GET'));
-        $this->assertNotNull($route->match('/blog/2017', 'GET'));
-        $this->assertNotNull($route->match('/blog/2017/07', 'GET'));
-        $this->assertNotNull($route->match('/blog/2017/07/01', 'GET'));
+        $this->assertGreaterThan(0, count($route->match('/blog', 'GET')));
+        $this->assertGreaterThan(0, count($route->match('/blog/2017', 'GET')));
+        $this->assertGreaterThan(0, count($route->match('/blog/2017/07', 'GET')));
+        $this->assertGreaterThan(0, count($route->match('/blog/2017/07/01', 'GET')));
 
     }
 
     public function testRegexParameterMatch(){
         $route = new Route('/post/:id|\d+|', 'GET');
-        $this->assertNotNull($route->match('/post/1', 'GET'));
-        $this->assertNotNull($route->match('/post/32', 'GET'));
+        $this->assertGreaterThan(0, count($route->match('/post/1', 'GET')));
+        $this->assertGreaterThan(0, count($route->match('/post/32', 'GET')));
         $this->assertCount(0, $route->match('/post/test', 'GET'));
         $this->assertCount(0, $route->match('/post/1a', 'GET'));
     }
