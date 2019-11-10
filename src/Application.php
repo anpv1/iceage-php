@@ -3,26 +3,24 @@ namespace IceAge;
 
 class Application
 {
-    protected $request;
     protected $routes = array();
     protected $groups = array();
     protected $services = array();
+    protected $active_route = null;
     protected $server;
     protected $get;
     protected $post;
-    protected $cookie;
-    protected $files;
 
-    public function __construct(array $server = array(), array $get = array(), 
-        array $post = array(), array $cookie = array(), array $files = array())
-    {
+    public function __construct(array $server = array(), array $get = array(), array $post = array()){
         $this->server = $server ? $server : $_SERVER;
         $this->get = $get ? $get : $_GET;
         $this->post = $post ? $post : $_POST;
-        $this->cookie = $cookie ? $cookie : $_COOKIE;
-        $this->files = $files ? $files : $_FILES;
-        $this->register('Psr\Http\Message\RequestInterface', array($this, 'psr_request'));
     }
+
+    public function get_active_route(){
+        return $this->active_route;
+    }
+
 
     public function bootstrap(array $services){
         foreach ($services as $handler) {
@@ -93,6 +91,7 @@ class Application
         foreach ($this->routes as $item) {
             $route_params = $item['route']->match($uri[0], $method);
             if($route_params){
+                $this->active_route = $item['route'];
                 $route_handler = $item['handler'];
                 $middlewares = $item['route']->getMiddlewares();
                 break;
@@ -104,10 +103,10 @@ class Application
             foreach ($this->groups as $group) {
                 $result = $group->match($uri[0], $method);
                 if($result){
-                    $route = $result['route'];
+                    $this->active_route = $result['route'];
                     $route_params = $result['route_params'];
                     $route_handler = $result['handler'];
-                    $middlewares = array_merge($group->getMiddlewares(), $route->getMiddlewares());
+                    $middlewares = array_merge($group->getMiddlewares(), $this->active_route->getMiddlewares());
                 }
             }
         }
@@ -125,7 +124,8 @@ class Application
         }
 
         // run route handler
-        return $this->run_handler($route_handler, array('route_params' => $route_params));
+        $this->register('IceAge\Route', array($this, 'get_active_route'));
+        return $this->run_handler($route_handler);
     }
 
     public function run_handler($handler, array $params = array()){
@@ -159,23 +159,10 @@ class Application
     public function response($response){
         if(is_string($response)){
             echo $response;
-        } else if($response instanceof \Psr\Http\Message\ResponseInterface){
-            // PSR-7 support
-            $this->psr_response($response);
         } else {
             header('Content-Type: application/json');
             echo json_encode($response);
         }
-    }
-
-    protected function psr_request(){
-        if(!$this->request){
-            $this->request = \Zend\Diactoros\ServerRequestFactory::fromGlobals(
-                                $this->server, $this->get, $this->post,
-                                $this->cookie, $this->files
-                            );
-        }
-        return $this->request;
     }
 
     protected function load_service($name){
@@ -194,12 +181,6 @@ class Application
         }
 
         return null;
-    }
-
-    // this code come from zend-diactoros
-    private function psr_response($response){
-        $emitter = new \Zend\Diactoros\Response\SapiEmitter();
-        $emitter->emit($response);
     }
 
     private function getHandlerRefection($handler){
