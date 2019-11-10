@@ -7,6 +7,7 @@ class Route {
     private $match_pattern = '';
     protected $middlewares = array();
     protected $param_pattern = '[\w\-\s\%]+';
+    protected $matches = array();
 
     public function __construct($pattern = '/', $method = 'GET|POST'){
         $this->pattern = $pattern;
@@ -28,7 +29,7 @@ class Route {
             }
         }
 
-        return $matches;
+        return $this->matches = $matches;
     }
 
     public function generate(array $params){
@@ -46,6 +47,10 @@ class Route {
 
     public function getMiddlewares(){
         return $this->middlewares;
+    }
+
+    public function __get($name){
+        return isset($this->matches[$name]) ? $this->matches[$name] : null;
     }
 
     protected function processOptionalParameters($pattern, $params){
