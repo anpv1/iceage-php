@@ -3,6 +3,8 @@ namespace IceAge;
 
 class Application
 {
+    public static $instance = null;
+
     protected $routes = array();
     protected $groups = array();
     protected $services = array();
@@ -10,6 +12,14 @@ class Application
     protected $server;
     protected $get;
     protected $post;
+
+    public static function getOrCreate(array $server = array(), array $get = array(), array $post = array()){
+        if(!self::$instance){
+            self::$instance = new Application($server, $get, $post);
+        }
+
+        return self::$instance;
+    }
 
     public function __construct(array $server = array(), array $get = array(), array $post = array()){
         $this->server = $server ? $server : $_SERVER;
@@ -173,8 +183,16 @@ class Application
             $parameters = $reflection->getParameters();
             $services = array();
             foreach($parameters as $parameter) {
+                $class_obj = $parameter->getClass();
+                $class_name = $class_obj ? $class_obj->name : '';
+
                 $service_name = $parameter->getName();
-                $services[] = $this->load_service($service_name);
+                $service = $this->load_service($service_name);
+                if(is_null($service) && $class_name){
+                    $service = $this->load_service($class_name);
+                }
+
+                $services[] = $service;
             }
 
             return call_user_func_array($this->services[$name], $services);
